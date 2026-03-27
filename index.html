@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cheer4Pedro — Live Run Tracking</title>
+  <meta name="description" content="Track Pedro's runs live! GPS tracking, live video, and all the cheering you can handle.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #ff5a1f;
+      --orange-light: #ff7a45;
+      --orange-glow: rgba(255, 90, 31, 0.2);
+      --red: #e0321f;
+      --yellow: #ffc233;
+      --green: #34c759;
+      --bg: #fef7f0;
+      --bg-card: #ffffff;
+      --text: #1a1410;
+      --text-mid: #5c4a3a;
+      --text-light: #9a8778;
+      --border: #f0e0d0;
+      --shadow: 0 2px 20px rgba(120, 60, 20, 0.08);
+      --shadow-hover: 0 8px 32px rgba(255, 90, 31, 0.15);
+      --font-display: 'Bangers', cursive;
+      --font-body: 'Nunito', sans-serif;
+      --radius: 16px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,90,31,0.04) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(254, 247, 240, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 2px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      letter-spacing: 0.03em;
+      color: var(--orange);
+      text-decoration: none;
+    }
+
+    .nav-brand .four { color: var(--red); }
+
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--red);
+      background: rgba(224, 50, 31, 0.1);
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      background: var(--red);
+      border-radius: 50%;
+      animation: livePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(224,50,31,0.5); }
+      50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(224,50,31,0); }
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      max-width: 1100px;
+      margin: 2rem auto 0;
+      padding: 0 2rem;
+      z-index: 1;
+    }
+
+    .hero-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 380px;
+      animation: cardIn 0.6s ease both;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-image {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .hero-text {
+      padding: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .hero-text h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 3.8rem);
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+
+    .hero-text h1 .cheer { color: var(--orange); }
+    .hero-text h1 .four { color: var(--red); }
+
+    .hero-text .tagline {
+      font-size: 1.1rem;
+      color: var(--text-mid);
+      line-height: 1.6;
+    }
+
+    .hero-text .tagline strong {
+      color: var(--orange);
+      font-weight: 700;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 0.5rem 0.9rem;
+      background: var(--bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--orange);
+    }
+
+    .stat-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-light);
+      font-weight: 700;
+    }
+
+    /* ── Section headers ── */
+    .section-header {
+      max-width: 1100px;
+      margin: 2.5rem auto 1rem;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 1;
+      position: relative;
+      animation: cardIn 0.6s 0.15s ease both;
+    }
+
+    .section-header h2 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      letter-spacing: 0.03em;
+    }
+
+    .section-icon {
+      width: 36px; height: 36px;
+      background: var(--orange-glow);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .section-icon svg {
+      width: 18px; height: 18px;
+      stroke: var(--orange);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── Panels Grid ── */
+    .panels {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      z-index: 1;
+      position: relative;
+      animation: cardIn 0.6s 0.3s ease both;
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s;
+    }
+
+    .panel:hover {
+      box-shadow: var(--shadow-hover);
+      border-color: var(--orange-light);
+      transform: translateY(-2px);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 1.25rem;
+      border-bottom: 2px solid var(--border);
+      background: var(--bg);
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      letter-spacing: 0.04em;
+    }
+
+    .panel-badge {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+    }
+
+    .badge-garmin { background: rgba(0, 150, 200, 0.1); color: #0096c8; }
+    .badge-youtube { background: rgba(255, 0, 0, 0.08); color: #e00; }
+
+    .embed-container {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+    }
+
+    .embed-container iframe,
+    .embed-container .placeholder {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #fdf5ee, #f8ece0);
+      color: var(--text-light);
+      gap: 0.6rem;
+      padding: 1.5rem;
+    }
+
+    .placeholder .emoji { font-size: 2.2rem; line-height: 1; }
+
+    .placeholder p {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.5;
+      color: var(--text-mid);
+    }
+
+    .placeholder .hint {
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--text-light);
+      background: rgba(0,0,0,0.03);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+    }
+
+    /* ── Garmin LiveTrack link panel ── */
+    .garmin-panel-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      min-height: 260px;
+      background: linear-gradient(160deg, #fdf5ee, #f8ece0);
+      gap: 1rem;
+    }
+
+    .garmin-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.35rem 0.8rem;
+      border-radius: 20px;
+    }
+
+    .garmin-status.offline {
+      color: var(--text-light);
+      background: rgba(0,0,0,0.05);
+    }
+
+    .garmin-status.live {
+      color: var(--red);
+      background: rgba(224, 50, 31, 0.1);
+    }
+
+    .garmin-status .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+    }
+
+    .garmin-status.offline .status-dot { background: var(--text-light); }
+    .garmin-status.live .status-dot { background: var(--red); animation: livePulse 1.5s ease-in-out infinite; }
+
+    .garmin-panel-body .emoji { font-size: 2.5rem; line-height: 1; }
+
+    .garmin-panel-body .message {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      line-height: 1.5;
+      max-width: 260px;
+    }
+
+    .garmin-track-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.8rem;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      letter-spacing: 0.04em;
+      color: white;
+      background: linear-gradient(135deg, var(--orange), var(--red));
+      border: none;
+      border-radius: 12px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(255, 90, 31, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .garmin-track-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(255, 90, 31, 0.4);
+    }
+
+    .garmin-track-btn:active { transform: translateY(0); }
+
+    .garmin-track-btn svg {
+      width: 18px; height: 18px;
+      fill: none;
+      stroke: white;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .garmin-panel-body .last-updated {
+      font-size: 0.7rem;
+      color: var(--text-light);
+    }
+
+    .garmin-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(160deg, #fdf5ee, #f8ece0);
+      gap: 0.6rem;
+      border-top: 2px solid var(--border);
+    }
+
+    .garmin-fallback .emoji { font-size: 1.4rem; line-height: 1; }
+
+    .garmin-fallback p {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    /* ── Cheer Banner ── */
+    .cheer-banner {
+      max-width: 1100px;
+      margin: 0.5rem auto 2.5rem;
+      padding: 0 2rem;
+      z-index: 1;
+      position: relative;
+    }
+
+    .cheer-inner {
+      background: linear-gradient(135deg, var(--orange), var(--red));
+      border-radius: var(--radius);
+      padding: 2rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      color: white;
+      box-shadow: 0 4px 24px rgba(255, 90, 31, 0.3);
+      animation: cardIn 0.6s 0.45s ease both;
+    }
+
+    .cheer-inner h3 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      letter-spacing: 0.03em;
+    }
+
+    .cheer-inner p {
+      font-size: 0.95rem;
+      opacity: 0.9;
+      margin-top: 0.25rem;
+    }
+
+    .cheer-emoji-bar { display: flex; gap: 0.5rem; align-items: center; }
+
+    .justgiving-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1.4rem;
+      height: 48px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.03em;
+      color: var(--orange);
+      background: white;
+      border: none;
+      border-radius: 12px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .justgiving-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .justgiving-btn:active { transform: translateY(0); }
+
+    .justgiving-btn svg {
+      width: 18px; height: 18px;
+      fill: var(--orange);
+    }
+
+    .cheer-btn {
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .cheer-btn:hover { background: rgba(255,255,255,0.35); transform: scale(1.15); }
+    .cheer-btn:active { transform: scale(0.95); }
+
+    .cheer-btn .float-emoji {
+      position: absolute;
+      font-size: 1.4rem;
+      pointer-events: none;
+      animation: floatUp 1s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+    }
+
+    /* ── Footer ── */
+    .footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 2.5rem;
+      border-top: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      z-index: 1;
+      position: relative;
+    }
+
+    .footer-left { font-size: 0.8rem; color: var(--text-light); }
+
+    .footer-links { display: flex; gap: 1.2rem; }
+
+    .footer-links a {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-mid);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--orange); }
+
+    /* ── Donation Callout ── */
+    .donate-callout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+      z-index: 1;
+      position: relative;
+      animation: cardIn 0.6s 0.35s ease both;
+    }
+
+    .donate-inner {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.8rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .donate-inner:hover {
+      border-color: #c8a2c8;
+      box-shadow: 0 8px 32px rgba(160, 100, 160, 0.1);
+    }
+
+    .donate-text {
+      flex: 1;
+    }
+
+    .donate-text h3 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+
+    .donate-text h3 a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .donate-text h3 a:hover span {
+      text-decoration: underline;
+    }
+
+    .donate-text h3 span {
+      color: #1a5632;
+    }
+
+    .donate-text p {
+      font-size: 0.9rem;
+      color: var(--text-mid);
+      line-height: 1.6;
+    }
+
+    .donate-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.6rem;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      letter-spacing: 0.04em;
+      color: white;
+      background: linear-gradient(135deg, #7b4ea0, #5c3d7a);
+      border: none;
+      border-radius: 12px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(123, 78, 160, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+
+    .donate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(123, 78, 160, 0.4);
+    }
+
+    .donate-btn:active { transform: translateY(0); }
+
+    .donate-btn svg {
+      width: 18px; height: 18px;
+      fill: white;
+    }
+
+    /* ── Races ── */
+    .races {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      z-index: 1;
+      position: relative;
+      animation: cardIn 0.6s 0.4s ease both;
+    }
+
+    .race-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .race-card:hover {
+      box-shadow: var(--shadow-hover);
+      border-color: var(--orange-light);
+      transform: translateY(-2px);
+    }
+
+    .race-card.next::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--orange), var(--red));
+    }
+
+    .race-label {
+      font-size: 0.6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      display: inline-flex;
+      align-self: flex-start;
+    }
+
+    .race-label.next-label {
+      background: var(--orange-glow);
+      color: var(--orange);
+    }
+
+    .race-label.future-label {
+      background: rgba(0,0,0,0.04);
+      color: var(--text-light);
+    }
+
+    .race-name {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .race-date {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-mid);
+    }
+
+    .race-countdown {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--orange);
+      margin-top: auto;
+    }
+
+    .race-countdown.past {
+      color: var(--green);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .nav { padding: 0.75rem 1.25rem; }
+      .hero { padding: 0 1.25rem; }
+      .hero-card { grid-template-columns: 1fr; }
+      .hero-image { max-height: 260px; }
+      .hero-text { padding: 1.5rem; }
+      .section-header { padding: 0 1.25rem; }
+      .panels { grid-template-columns: 1fr; padding: 0 1.25rem 2rem; }
+      .races { grid-template-columns: 1fr; padding: 0 1.25rem 2rem; }
+      .donate-callout { padding: 0 1.25rem 2rem; }
+      .donate-inner { flex-direction: column; text-align: center; }
+      .cheer-banner { padding: 0 1.25rem; }
+      .cheer-inner { flex-direction: column; text-align: center; padding: 1.5rem; }
+      .footer { padding: 1.5rem 1.25rem 2rem; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="#" class="nav-brand">CHEER<span class="four">4</span>PEDRO</a>
+    <div class="live-indicator" id="nav-live">
+      <span class="live-dot" style="animation:none; background:var(--text-light);"></span>
+      <span id="nav-live-text">Offline</span>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-card">
+      <div class="hero-image">
+        <img src="hero.png" alt="Pedro crossing the finish line — illustration" />
+      </div>
+      <div class="hero-text">
+        <h1><span class="cheer">CHEER</span><span class="four">4</span><span class="pedro">PEDRO</span></h1>
+        <p class="tagline">
+          Track my runs <strong>in real time</strong> with GPS and live video. Cheer me on from your couch. Donate to a good cause. Judgement of pace is optional but expected.
+        </p>
+        <div class="hero-stats">
+          <div class="stat">
+            <div class="stat-value">OXFORD</div>
+            <div class="stat-label">Base</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">FĒNIX 7 PRO</div>
+            <div class="stat-label">Watch</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">FLEET HALF</div>
+            <div class="stat-label">Next Race</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-header">
+    <div class="section-icon">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><path d="M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+    </div>
+    <h2>Live Tracking</h2>
+  </div>
+
+  <div class="panels">
+    <div class="panel" id="garmin-panel-wrapper">
+      <div class="panel-header">
+        <span class="panel-title">GPS Tracker</span>
+        <span class="panel-badge badge-garmin">Garmin LiveTrack</span>
+      </div>
+      <div class="embed-container" id="garmin-iframe-wrap" style="display:none;">
+      </div>
+      <div class="garmin-fallback" id="garmin-fallback" style="display:none;">
+        <span class="emoji">📍</span>
+        <p>Map blocked by Garmin? Open it directly:</p>
+        <a href="#" id="garmin-fallback-link" class="garmin-track-btn" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open LiveTrack
+        </a>
+      </div>
+      <div class="garmin-panel-body" id="garmin-panel">
+        <span class="garmin-status offline" id="garmin-status">
+          <span class="status-dot"></span>
+          Not running right now
+        </span>
+        <span class="emoji" id="garmin-emoji">🏖️</span>
+        <p class="message" id="garmin-message">Pedro is resting. Check back when a run is live!</p>
+      </div>
+    </div>
+
+    <div class="panel" id="youtube-panel-wrapper">
+      <div class="panel-header">
+        <span class="panel-title">Live Camera</span>
+        <span class="panel-badge badge-youtube">YouTube Live</span>
+      </div>
+      <div class="embed-container" id="youtube-iframe-wrap" style="display:none;">
+      </div>
+      <div class="garmin-fallback" id="youtube-fallback" style="display:none;">
+        <span class="emoji">🎥</span>
+        <p>Stream not embedding? Watch on YouTube:</p>
+        <a href="https://www.youtube.com/channel/UCG1vGm3phWVuADEe52qndnQ/live" id="youtube-fallback-link" class="garmin-track-btn" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#e00,#c00);">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Watch on YouTube
+        </a>
+      </div>
+      <div class="garmin-panel-body" id="youtube-panel">
+        <span class="garmin-status offline" id="youtube-status">
+          <span class="status-dot"></span>
+          No stream right now
+        </span>
+        <span class="emoji" id="youtube-emoji">📺</span>
+        <p class="message" id="youtube-message">Stream starts when Pedro goes live on YouTube.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Donate ── -->
+  <div class="donate-callout">
+    <div class="donate-inner">
+      <div class="donate-text">
+        <h3>Running for <a href="https://restore.org.uk/" target="_blank" rel="noopener"><span>Restore</span></a></h3>
+        <p>I'm raising money for <a href="https://restore.org.uk/" target="_blank" rel="noopener" style="color:#1a5632;font-weight:700;text-decoration:underline;">Restore</a>, an Oxfordshire mental health charity that supports around 500 people a year towards recovery through coaching, training, and therapeutic activity. Every donation makes a real difference.</p>
+      </div>
+      <a href="https://www.justgiving.com/page/pedro-porto-buarque-de-gusmao" target="_blank" rel="noopener" class="donate-btn">
+        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        Donate on JustGiving
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Races ── -->
+  <div class="section-header">
+    <div class="section-icon">
+      <svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+    </div>
+    <h2>Race Calendar</h2>
+  </div>
+
+  <div class="races" id="races">
+    <div class="race-card next">
+      <span class="race-label next-label">Next Race</span>
+      <div class="race-name">Fleet Half Marathon</div>
+      <div class="race-date">29 March 2026 · 9:30 AM</div>
+      <div class="race-countdown" data-date="2026-03-29"></div>
+    </div>
+    <div class="race-card">
+      <span class="race-label future-label">Upcoming</span>
+      <div class="race-name">Bidwells Oxford</div>
+      <div class="race-date">10 May 2026 · 10:00 AM</div>
+      <div class="race-countdown" data-date="2026-05-10"></div>
+    </div>
+    <div class="race-card">
+      <span class="race-label future-label">Upcoming</span>
+      <div class="race-name">Oxford Half</div>
+      <div class="race-date">11 October 2026 · 9:30 AM</div>
+      <div class="race-countdown" data-date="2026-10-11"></div>
+    </div>
+  </div>
+
+  <div class="cheer-banner">
+    <div class="cheer-inner">
+      <div>
+        <h3>Send a Cheer!</h3>
+        <p>Smash a button. Pedro can feel the vibes (probably).</p>
+      </div>
+      <div class="cheer-emoji-bar">
+        <button class="cheer-btn" data-emoji="🔥" aria-label="Fire cheer">🔥</button>
+        <button class="cheer-btn" data-emoji="💪" aria-label="Flex cheer">💪</button>
+        <button class="cheer-btn" data-emoji="🏃" aria-label="Runner cheer">🏃</button>
+        <button class="cheer-btn" data-emoji="🎉" aria-label="Party cheer">🎉</button>
+        <a href="https://www.justgiving.com/page/pedro-porto-buarque-de-gusmao" target="_blank" rel="noopener" class="justgiving-btn">
+          <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          Donate
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-left">&copy; 2026 Pedro Porto Buarque de Gusmão &middot; Cheer4Pedro</div>
+    <nav class="footer-links">
+      <a href="https://scholar.google.com" target="_blank" rel="noopener">Scholar</a>
+      <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.strava.com" target="_blank" rel="noopener">Strava</a>
+    </nav>
+  </footer>
+
+  <script>
+    // ── Cheer button float animation ──
+    document.querySelectorAll('.cheer-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.getAttribute('data-emoji');
+        const floater = document.createElement('span');
+        floater.classList.add('float-emoji');
+        floater.textContent = emoji;
+        floater.style.left = Math.random() * 20 - 10 + 'px';
+        btn.appendChild(floater);
+        floater.addEventListener('animationend', () => floater.remove());
+      });
+    });
+
+    // ── Race countdowns ──
+    function updateCountdowns() {
+      document.querySelectorAll('.race-countdown[data-date]').forEach(el => {
+        const raceDate = new Date(el.dataset.date + 'T09:00:00');
+        const now = new Date();
+        const diff = raceDate - now;
+
+        if (diff < 0) {
+          el.textContent = 'Race complete! ✅';
+          el.classList.add('past');
+        } else {
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          if (days === 0) {
+            el.textContent = 'Race day! 🏁';
+          } else if (days === 1) {
+            el.textContent = 'Tomorrow!';
+          } else {
+            el.textContent = days + ' days to go';
+          }
+        }
+      });
+    }
+    updateCountdowns();
+
+    // ── Load live config for both Garmin and YouTube ──
+    let loaded = false;
+    async function loadLiveConfig() {
+      try {
+        const res = await fetch('livetrack.json?' + Date.now());
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const anyLive = (data.garmin && data.garmin.active) || (data.youtube && data.youtube.active);
+
+        // Update nav indicator if anything is live
+        if (anyLive) {
+          const navLive = document.getElementById('nav-live');
+          const navDot = navLive.querySelector('.live-dot');
+          const navText = document.getElementById('nav-live-text');
+          navLive.style.color = 'var(--red)';
+          navLive.style.background = 'rgba(224, 50, 31, 0.1)';
+          navDot.style.background = 'var(--red)';
+          navDot.style.animation = 'livePulse 1.5s ease-in-out infinite';
+          navText.textContent = 'Live Now!';
+        }
+
+        // ── Garmin ──
+        if (data.garmin && data.garmin.active && data.garmin.url && !loaded) {
+          const offlinePanel = document.getElementById('garmin-panel');
+          const iframeWrap = document.getElementById('garmin-iframe-wrap');
+          const fallback = document.getElementById('garmin-fallback');
+          const fallbackLink = document.getElementById('garmin-fallback-link');
+
+          offlinePanel.style.display = 'none';
+          fallbackLink.href = data.garmin.url;
+
+          iframeWrap.style.display = 'block';
+          const iframe = document.createElement('iframe');
+          iframe.src = data.garmin.url;
+          iframe.setAttribute('allowfullscreen', '');
+          iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;';
+
+          let iframeLoaded = false;
+          iframe.addEventListener('load', () => {
+            iframeLoaded = true;
+            fallback.style.display = 'flex';
+          });
+          iframe.addEventListener('error', () => {
+            iframeWrap.style.display = 'none';
+            fallback.style.display = 'flex';
+          });
+          iframeWrap.appendChild(iframe);
+
+          setTimeout(() => {
+            if (!iframeLoaded) fallback.style.display = 'flex';
+          }, 3000);
+        }
+
+        // ── YouTube ──
+        if (data.youtube && data.youtube.active && !loaded) {
+          const ytOffline = document.getElementById('youtube-panel');
+          const ytIframeWrap = document.getElementById('youtube-iframe-wrap');
+          const ytFallback = document.getElementById('youtube-fallback');
+          const ytFallbackLink = document.getElementById('youtube-fallback-link');
+
+          ytOffline.style.display = 'none';
+
+          const channelId = 'UCG1vGm3phWVuADEe52qndnQ';
+          let embedUrl;
+          if (data.youtube.video_id) {
+            embedUrl = 'https://www.youtube.com/embed/' + data.youtube.video_id + '?autoplay=1&mute=1';
+            ytFallbackLink.href = 'https://www.youtube.com/watch?v=' + data.youtube.video_id;
+          } else {
+            embedUrl = 'https://www.youtube.com/embed/live_stream?channel=' + channelId + '&autoplay=1&mute=1';
+            ytFallbackLink.href = 'https://www.youtube.com/channel/' + channelId + '/live';
+          }
+
+          ytIframeWrap.style.display = 'block';
+          const ytIframe = document.createElement('iframe');
+          ytIframe.src = embedUrl;
+          ytIframe.setAttribute('allowfullscreen', '');
+          ytIframe.setAttribute('allow', 'autoplay; encrypted-media');
+          ytIframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;';
+
+          let ytLoaded = false;
+          ytIframe.addEventListener('load', () => {
+            ytLoaded = true;
+            ytFallback.style.display = 'flex';
+          });
+          ytIframe.addEventListener('error', () => {
+            ytIframeWrap.style.display = 'none';
+            ytFallback.style.display = 'flex';
+          });
+          ytIframeWrap.appendChild(ytIframe);
+
+          setTimeout(() => {
+            if (!ytLoaded) ytFallback.style.display = 'flex';
+          }, 3000);
+        }
+
+        loaded = true;
+
+      } catch (e) {
+        // livetrack.json missing or invalid — keep offline state
+      }
+    }
+
+    loadLiveConfig();
+    setInterval(loadLiveConfig, 60000);
+  </script>
+
+</body>
+</html>
