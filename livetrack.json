@@ -1,10 +1,1 @@
-{
-  "garmin": {
-    "active": false,
-    "url": "https://livetrack.garmin.com/session/YOUR_SESSION_ID/token/YOUR_TOKEN"
-  },
-  "youtube": {
-    "active": true,
-    "video_id": ""
-  }
-}
+{"garmin": {"active": true, "url": "https://livetrack.garmin.com/session/71608c97-662d=\n-8498-ae7b-12a882236d00/token/60D8BBDE5FCAD1E3A7AF8599EAD718"}, "youtube": {"active": true, "video_id": ""}}
