@@ -4,7 +4,7 @@
     "url": "https://livetrack.garmin.com/session/YOUR_SESSION_ID/token/YOUR_TOKEN"
   },
   "youtube": {
-    "active": false,
+    "active": true,
     "video_id": "dQw4w9WgXcQ"
   }
 }
